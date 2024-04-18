@@ -9,7 +9,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: radiance-k8s
+      app.kubernetes.io/name: radiance-local
   template:
     metadata:
       labels:
@@ -21,30 +21,8 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
-          env:
-            - name: HOST
-              value: "0.0.0.0"
-            - name: PORT
-              value: "8080"
-            - name: DATABASE_TYPE
-              value: "mysql"
-            - name: DATABASE_HOST
-              value: "10.100.154.17"
-            - name: DATABASE_PORT
-              value: "3306"
-            - name: DATABASE_NAME
-              value: "dmp"
-            - name: USERNAME_DB
-              value: "mbiz_dmp"
-            - name: PASSWORD_DB
-              value: "K3iVeequee5uo7m"
-            - name: DMP_EXCHANGE
-              value: "dmp_event"
-            - name: RABBIT_HOST
-              value: "10.100.154.20"
-            - name: RABBIT_PORT
-              value: "5672"
-            - name: RABBIT_USER
-              value: "admin"
-            - name: RABBIT_PASSWORD
-              value: "koorooX5eeghiaf"
+          envFrom:
+            - configMapRef:
+                name: global-env
+            - configMapRef:
+                name: radiance-env

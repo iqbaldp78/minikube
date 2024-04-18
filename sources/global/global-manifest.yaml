@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dmp-local
+  labels:
+    name: dmp-local
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: global-env
+  namespace: dmp-local
+  labels:
+    app: global-env
+    app.kubernetes.io/instance: global-env-local
+data:
+  APP_ENV: dev
+  USE_GQL_PLAYGROUND: "true"
+  WHITELIST_CODE: ""
+  SENTRY_RAFAELA_DSN: ""
+  REDIS_STATIC_TRAVEL_DB: "9"
+  SENTRY_DSN: ""
+
+  DATABASE_TYPE: mysql
+  DATABASE_HOST: 10.100.154.17
+  DATABASE_PORT: "3306"
+  DATABASE_NAME: dmp
+  USERNAME_DB: mbiz_dmp
+  PASSWORD_DB: K3iVeequee5uo7m
+
+  PG_DEBUG: "true"
+  PG_TYPE: postgres
+  PG_HOST: 10.100.154.32
+  PG_PORT: "5432"
+  PG_MAX_LIFETIME: "60"
+  PG_MAX_IDLE_CONNECTION: "1"
+  PG_MAX_OPEN_CONNECTION: "1"
+  PG_PASSWORD: 3NAai8zO8i1olp9RvCnlBVPMhjWwITNgMl1
+  PG_USERNAME: stg_travel
+
+  RABBIT_HOST: 10.100.154.20
+  RABBIT_PORT: "5672"
+  RABBIT_USER: admin
+  RABBIT_PASSWORD: koorooX5eeghiaf
+
+  RABBIT_HOST_NOTIFICATION: 10.100.154.12
+  RABBIT_PORT_NOTIFICATION: "5672"
+  RABBIT_USER_NOTIFICATION: admin
+  RABBIT_PASSWORD_NOTIFICATION: koorooX5eeghiaf
+  RMQ_NOTIF_PREFETCH_COUNT: "10"
+  RMQ_NOTIF_SINGLE_ACTIVE_CONSUMER: "false"
+
+  REDIS_SESSION_HOST: 10.100.154.17
+  REDIS_SESSION_PORT: "6379"
+  REDIS_SESSION_DB: "1"
+  REDIS_SESSION_TIMEOUT: "2"
+
+  REDIS_CACHE_HOST: 10.100.154.17
+  REDIS_CACHE_PORT: "6379"
+  REDIS_CACHE_DB: "2"
+  REDIS_CACHE_TIMEOUT: "2"
+
+  REDIS_STATIC_HOST: 10.100.154.17
+  REDIS_STATIC_PORT: "6379"
+  REDIS_STATIC_DB: "3"
+  REDIS_STATIC_TIMEOUT: "0"
+
+  REDIS_CHAT_HOST: 10.100.154.17
+  REDIS_CHAT_PORT: "6379"
+  REDIS_CHAT_DB: "4"
+  REDIS_CHAT_TIMEOUT: "0"
+
+  APP_API_URL: http://reverse-proxy
+  TRAVEL_API_URL: http://reverse-proxy-travel
+  AUTH_API_URL: http://reverse-proxy/auth
+
+  APP_BASE_DOMAIN: dmp.loc
+  APP_IMAGE_SERVER: https://img.mataharibiz.com
+  CHAT_API_URL: http://hyperstone.dmp.loc:9082
+  APP_WIDGET_URL: http://mjollnir.dmp.loc
+  APP_BUYER_URL: http://cuirass.dmp.loc
+  APP_SELLER_URL: http://bloodthorn.dmp.loc
+  APP_ADMIN_URL: http://tarrasque.dmp.loc
+  APP_EDIRECTORY_URL: http://quarterstaff.dmp.loc/
+  GATSBY_API_URL: http://api.dmp.loc:9998
+  GATSBY_APP_IMAGE_SERVER: http://img.dmp.loc
+  GATSBY_BUYER_URL: http://cuirass.dmp.loc
+  GATSBY_SELLER_URL: http://bloodthorn.dmp.loc
+  GATSBY_EDIRECTORY_URL: http://quarterstaff.dmp.loc
+  APP_BUYER_NAME: vladmir
+  APP_SELLER_NAME: voodoo
+  APP_ADMIN_NAME: tarrasque
+  APP_MOBILE_NAME: vembrace
+  APP_MOBILE_SELLER_NAME: trident
+  DEEP_LINK_HOST_BUYER: https://www.mataharibiz.com
+  DEEP_LINK_HOST_SELLER: https://sellercenter.mataharibiz.com
+  RADIANCE_GQL: http://reverse-proxy/users/gql/query
+  DMP_COMPANY_NAME: PT. Brilliant E-commerce Berjaya DMP
+  EMAIL_HELP: help@mbizmarket.co.id
+  DMP_S3_ASSETS_URL: http://assets.mbizmarket.my.id
+  DMP_ASSETS_URL: http://cuirass.dmp.loc
+  EMAIL_BANNER_URL: /img/banner-email-dmp.png
+  EMAIL_LOGO_URL: /img/mbiz-logo.png
+  DMP_EXCHANGE: dmp_event
+  CREATE_CHAT_NOTIFICATION: contractual-contract-created
+  CALLBACK_EXCHANGE: dmp_callback
+  DELAY_EXCHANGE: dmp_delay
+
+  SYSTEM_TOKEN: eyJ0eXAiOiJhcHAiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzeXN0ZW0iLCJhdXRoIjoiUk9MRV9BUFBMSUNBVElPTiIsImV4cCI6MzIwMzk5MzgwMn0.Y7YcBUw-SIpKnkLq6rUMUj0z-sKaEffsRhNcoM8fA-nQzD5TS8iX4W234NqihRZkEb4Q7kQe_AXnvxC4H0jN8A
+
+  REDIS_COMPANY_HOST: 10.100.154.60
+  REDIS_COMPANY_PORT: "6379"
+  REDIS_COMPANY_USER_ROLES_DB: "1"
+
+  REDIS_TOKEN_HOST: 10.100.154.60
+  REDIS_TOKEN_PORT: "6379"
+  REDIS_TOKEN_USER_DB: "2"
+
+  SENTRY_SOURCE: dev
+  REDISEARCH_HOST: 10.100.154.29
+  MAX_ADDITIONAL_DOC: "3"
+  DMP_PUSH_NOTIF_EXCHANGE: dmp_push_notif_event

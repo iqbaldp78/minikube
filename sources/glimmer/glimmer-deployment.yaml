@@ -1,0 +1,929 @@
+# ---
+# kind: ConfigMap
+# apiVersion: v1
+# metadata:
+#   name: glimmer-env
+#   namespace: dmp-local
+#   labels:
+#     app: glimmer
+#     app.kubernetes.io/instance: glimmer-local
+# data:
+#   KONG_ACCESS_LOG: /dev/stdout
+#   KONG_ADMIN_ACCESS_LOG: /dev/stdout
+#   KONG_ADMIN_ERROR_LOG: /dev/stderr
+#   KONG_ADMIN_GUI_ACCESS_LOG: /dev/stdout
+#   KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 http2 ssl
+#   KONG_ADMIN_SERVICE_PORT: "8001"
+#   KONG_API_ERROR_LOG: /dev/stderr
+#   KONG_DATABASE: postgres
+#   KONG_ERROR_LOG: /dev/stderr
+#   KONG_GUI_ERROR_LOG: /dev/stderr
+#   KONG_LUA_PACKAGE_PATH: /opt/?.lua;;
+#   KONG_NGINX_HTTP_LARGE_CLIENT_HEADER_BUFFERS: 128 256k
+#   KONG_NGINX_WORKER_PROCESSES: '"2"'
+#   KONG_PG_DATABASE: "api_gateway"
+#   KONG_PG_HOST: "kong-postgres-svc"
+#   KONG_PG_PORT: "5432"
+#   KONG_PG_TIMEOUT: "5000"
+#   KONG_PG_USER: "mbiz"
+#   KONG_PG_PASSWORD: "mbiz"
+#   KONG_PLUGINS: bundled,mbiz-claims2header,kong-path-allow
+#   # KONG_PLUGINSERVER_NAMES: dmp_custom_auth,elastic-apm
+#   KONG_PLUGINSERVER_NAMES: dmp_custom_auth
+#   # KONG_PLUGINSERVER_ELASTIC_APM_QUERY_CMD: /usr/local/bin/elastic-apm -dump
+#   KONG_PORTAL_API_ACCESS_LOG: /dev/stdout
+#   KONG_PORT_MAPS: 80:8000, 443:8443
+#   # KONG_PREFIX: /kong_prefix/
+#   KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 http2 ssl
+#   KONG_STATUS_LISTEN: 0.0.0.0:8100
+
+---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: glimmer-local
+#   namespace: dmp-local
+#   labels:
+#     app.kubernetes.io/name: glimmer-local
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/name: glimmer-local
+#   template:
+#     metadata:
+#       labels:
+#         app.kubernetes.io/name: glimmer-local
+#     spec:
+#       initContainers:
+#         - name: glimmer-kong-init-migrations
+#           image: glimmer-k8s
+#           imagePullPolicy: Never
+#           command:
+#             - kong
+#             - migrations
+#             - bootstrap
+#           envFrom:
+#             - configMapRef:
+#                 name: glimmer-env
+#           volumeMounts:
+#             - name: kong-plugin-mbiz-claims2header
+#               readOnly: true
+#               mountPath: /plugins/mbiz-claims2header
+#             # - name: kong-plugin-custom-auth
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/custom-auth
+#             # - name: kong-path-allow
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/kong-path-allow
+#           terminationMessagePath: /dev/termination-log
+#           terminationMessagePolicy: File
+#       # - name: glimmer-kong-pre-upgrade-migrations
+#       #   image: kong-migrations
+#       #   command:
+#       #     - kong
+#       #     - migrations
+#       #     - up
+#       #   envFrom:
+#       #     - configMapRef:
+#       #         name: glimmer-env
+#       #   # volumeMounts:
+#       #   #   - name: kong-plugin-mbiz-claims2header
+#       #   #     readOnly: true
+#       #   #     mountPath: /opt/kong/plugins/mbiz-claims2header
+#       #   #   - name: kong-plugin-custom-auth
+#       #   #     readOnly: true
+#       #   #     mountPath: /opt/kong/plugins/custom-auth
+#       #   #   - name: kong-path-allow
+#       #   #     readOnly: true
+#       #   #     mountPath: /opt/kong/plugins/kong-path-allow
+#       #   # terminationMessagePath: /dev/termination-log
+#       #   # terminationMessagePolicy: File
+#       #   # imagePullPolicy: IfNotPresent
+#       # - name: glimmer-kong-post-upgrade-migrations
+#       #   image: kong-migrations
+#       #   command:
+#       #     - kong
+#       #     - migrations
+#       #     - finish
+#       #   envFrom:
+#       #     - configMapRef:
+#       #         name: glimmer-env
+#       #   # volumeMounts:
+#       #   #   - name: kong-plugin-mbiz-claims2header
+#       #   #     readOnly: true
+#       #   #     mountPath: /opt/kong/plugins/mbiz-claims2header
+#       #   #   - name: kong-plugin-custom-auth
+#       #   #     readOnly: true
+#       #   #     mountPath: /opt/kong/plugins/custom-auth
+#       #   #   - name: kong-path-allow
+#       #   #     readOnly: true
+#       #   #     mountPath: /opt/kong/plugins/kong-path-allow
+#       #   # terminationMessagePath: /dev/termination-log
+#       #   # terminationMessagePolicy: File
+#       #   # imagePullPolicy: IfNotPresent
+#       containers:
+#         - name: glimmer-local
+#           image: glimmer-k8s
+#           imagePullPolicy: Never
+#           ports:
+#             - containerPort: 8000
+#           envFrom:
+#             - configMapRef:
+#                 name: glimmer-env
+#           volumeMounts:
+#             - name: kong-plugin-mbiz-claims2header
+#               readOnly: true
+#               mountPath: /host/custom-auth/kong/plugins/mbiz-claims2header
+#       volumes:
+#         - name: kong-plugin-mbiz-claims2header
+#           hostPath:
+#             path: /host/kong-dmp
+#             type: Directory
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   namespace: dmp-local
+#   labels:
+#     app: kong-gw
+#     app.kubernetes.io/managed-by: Helm
+#     app.kubernetes.io/name: kong-gw
+#     app.kubernetes.io/version: 1.26.5
+#     helm.sh/chart: courier-0.1.0
+#   name: kong-gw
+# spec:
+#   ports:
+#     - name: kong-proxy
+#       nodePort: 32025
+#       port: 80
+#       protocol: TCP
+#       targetPort: 8000
+#     - name: kong-proxy-tls
+#       port: 443
+#       protocol: TCP
+#       targetPort: 8443
+#     - name: kong-admin
+#       nodePort: 30026
+#       port: 8001
+#       protocol: TCP
+#     - name: kong-admin-tls
+#       nodePort: 30443
+#       port: 8444
+#       protocol: TCP
+#   selector:
+#     app: kong-gw
+#     app.kubernetes.io/name: kong-gw
+#   type: NodePort
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   namespace: dmp-local
+#   labels:
+#     app: kong-gw
+#     app.kubernetes.io/managed-by: Helm
+#     app.kubernetes.io/name: kong-gw
+#     app.kubernetes.io/version: 1.26.5
+#     helm.sh/chart: courier-0.1.0
+#   name: kong-gw
+# spec:
+#   replicas: 1
+#   revisionHistoryLimit: 5
+#   selector:
+#     matchLabels:
+#       app: kong-gw
+#       app.kubernetes.io/name: kong-gw
+#   strategy:
+#     rollingUpdate:
+#       maxSurge: 1
+#       maxUnavailable: 0
+#     type: RollingUpdate
+#   template:
+#     metadata:
+#       labels:
+#         app: kong-gw
+#         app.kubernetes.io/name: kong-gw
+#     spec:
+#       affinity:
+#         podAntiAffinity:
+#           requiredDuringSchedulingIgnoredDuringExecution:
+#             - labelSelector:
+#                 matchLabels:
+#                   app: kong-gw
+#                   app.kubernetes.io/name: kong-gw
+#               topologyKey: kubernetes.io/hostname
+#       initContainers:
+#         - name: glimmer-kong-init-migrations
+#           image: glimmer-k8s
+#           imagePullPolicy: Never
+#           command:
+#             - kong
+#             - migrations
+#             - bootstrap
+#           envFrom:
+#             - configMapRef:
+#                 name: glimmer-env
+#           volumeMounts:
+#             - name: kong-plugin-mbiz-claims2header
+#               readOnly: true
+#               mountPath: /plugins/mbiz-claims2header
+#             # - name: kong-plugin-custom-auth
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/custom-auth
+#             # - name: kong-path-allow
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/kong-path-allow
+#           terminationMessagePath: /dev/termination-log
+#           terminationMessagePolicy: File
+#         - name: glimmer-kong-pre-upgrade-migrations
+#           image: glimmer-k8s
+#           imagePullPolicy: Never
+#           command:
+#             - kong
+#             - migrations
+#             - up
+#           envFrom:
+#             - configMapRef:
+#                 name: glimmer-env
+#           volumeMounts:
+#             - name: kong-plugin-mbiz-claims2header
+#               readOnly: true
+#               mountPath: /plugins/mbiz-claims2header
+#             # - name: kong-plugin-custom-auth
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/custom-auth
+#             # - name: kong-path-allow
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/kong-path-allow
+#           terminationMessagePath: /dev/termination-log
+#           terminationMessagePolicy: File
+#         - name: glimmer-kong-post-upgrade-migrations
+#           image: glimmer-k8s
+#           imagePullPolicy: Never
+#           command:
+#             - kong
+#             - migrations
+#             - finish
+#           envFrom:
+#             - configMapRef:
+#                 name: glimmer-env
+#           volumeMounts:
+#             - name: kong-plugin-mbiz-claims2header
+#               readOnly: true
+#               mountPath: /plugins/mbiz-claims2header
+#             # - name: kong-plugin-custom-auth
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/custom-auth
+#             # - name: kong-path-allow
+#             #   readOnly: true
+#             #   mountPath: /opt/kong/plugins/kong-path-allow
+#           terminationMessagePath: /dev/termination-log
+#           terminationMessagePolicy: File
+#       containers:
+#         - image: kong:3.3.1
+#           imagePullPolicy: Always
+#           name: kong
+#           ports:
+#             - containerPort: 8000
+#               name: kong-proxy
+#               protocol: TCP
+#             - containerPort: 8443
+#               name: kong-proxy-tls
+#               protocol: TCP
+#             - containerPort: 8001
+#               name: kong-admin
+#               protocol: TCP
+#             - containerPort: 8444
+#               name: kong-admin-tls
+#               protocol: TCP
+#           envFrom:
+#             - configMapRef:
+#                 name: glimmer-env
+#       volumes:
+#         - name: kong-plugin-mbiz-claims2header
+#           hostPath:
+#             path: /host/kong-dmp
+#             type: Directory
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: dmp-local
+  annotations:
+    linkerd.io/inject: disabled
+  labels:
+    app: glimmer
+  name: glimmer-env
+data:
+  ELASTIC_APM_ACTIVE: "false"
+  ELASTIC_APM_ENVIRONMENT: Staging
+  ELASTIC_APM_SERVER_URL: https://apm.mbizmarket.my.id
+  ELASTIC_APM_SERVICE_NAME: glimmer
+  KONG_ACCESS_LOG: /dev/stdout
+  KONG_ADMIN_ACCESS_LOG: /dev/stdout
+  KONG_ADMIN_ERROR_LOG: /dev/stderr
+  KONG_ADMIN_GUI_ACCESS_LOG: /dev/stdout
+  KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 http2 ssl
+  KONG_ADMIN_SERVICE_PORT: "8001"
+  KONG_API_ERROR_LOG: /dev/stderr
+  KONG_DATABASE: postgres
+  KONG_ERROR_LOG: /dev/stderr
+  KONG_GUI_ERROR_LOG: /dev/stderr
+  KONG_LUA_PACKAGE_PATH: /opt/?.lua;;
+  KONG_NGINX_HTTP_LARGE_CLIENT_HEADER_BUFFERS: 128 256k
+  KONG_NGINX_WORKER_PROCESSES: '"2"'
+  KONG_PG_DATABASE: api_gateway
+  KONG_PG_HOST: kong-postgres-svc
+  KONG_PG_PORT: "5432"
+  KONG_PG_TIMEOUT: "5000"
+  KONG_PG_USER: mbiz
+  KONG_PG_PASSWORD: mbiz
+  KONG_PLUGINS: bundled,mbiz-claims2header,kong-path-allow
+  KONG_PORT_MAPS: 80:8000, 443:8443
+  KONG_PORTAL_API_ACCESS_LOG: /dev/stdout
+  KONG_PREFIX: /kong_prefix/
+  KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 http2 ssl
+  KONG_STATUS_LISTEN: 0.0.0.0:8100
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: dmp-local
+
+  annotations:
+    linkerd.io/inject: disabled
+  creationTimestamp: null
+  labels:
+    app: glimmer
+  name: kong-path-allow
+data:
+  handler.lua: |
+    local json = require("cjson")
+    local kongPathAllow = {}
+
+    kongPathAllow.PRIORITY = 840
+    kongPathAllow.VERSION = "0.1.3"
+    local kong = kong
+    local ngx = ngx
+    local re_find = ngx.re.find
+    local sub = string.sub
+
+    local function match(source, target, regex)
+      if regex then
+        local from = re_find(source, target)
+        if from == 1 then
+          return true
+        end
+      end
+      if not regex and source == target then
+        return true
+      end
+      return false
+    end
+
+    local function get_target_path()
+      local get_path = kong.request.get_path
+      local path = get_path()
+      local route = ngx.ctx.route
+      local strip_path = route.strip_path
+      if false == strip_path then
+        return path
+      end
+
+      local paths = route.paths
+      local from, to, req_path
+      for _, prefix in ipairs(paths) do
+        from, to = re_find(path, prefix, "jo")
+        if from == 1 then
+          req_path = sub(path, to + 1, #path)
+          from = re_find(req_path, "/", "jo")
+          if not from or from ~= 1 then
+            req_path = '/' .. req_path
+          end
+          return req_path
+        end
+      end
+      return ""
+    end
+
+    function kongPathAllow:access(config)
+      local allow_paths = config.allow_paths
+      local deny_paths = config.deny_paths
+      local regex = config.regex
+
+      local target_path = get_target_path()
+      -- deny_paths
+      if deny_paths then
+        for _, path in ipairs(deny_paths) do
+          if match(target_path, path, regex) then
+            kong.response.exit(403, json.encode({ message = "path not allowed" }),
+                { ["Content-Type"] = "application/json" })
+            return
+          end
+        end
+      end
+      -- deny_paths and not allow_paths => authorize by default
+      if deny_paths and not allow_paths then
+        return
+      end
+      -- allow_paths
+      if allow_paths then
+        for _, path in ipairs(allow_paths) do
+          if match(target_path, path, regex) then
+            return
+          end
+        end
+      end
+      kong.response.exit(403, json.encode({ message = "path not allowed" }), {
+          ["Content-Type"] = "application/json" })
+    end
+
+    return kongPathAllow
+  schema.lua: |
+    local typedefs = require "kong.db.schema.typedefs"
+
+    return {
+        name = "kong-path-allow",
+        fields = {
+            { config = {
+                type = "record",
+                fields = {
+                    { allow_paths = typedefs.router_path },
+                    { deny_paths = typedefs.router_path },
+                    { regex = {
+                        type = "boolean",
+                        required = true,
+                        default = true
+                    }
+                    }
+                }
+            } }
+        }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: dmp-local
+
+  annotations:
+    linkerd.io/inject: disabled
+  creationTimestamp: null
+  labels:
+    app: glimmer
+  name: kong-plugin-custom-auth
+data:
+  handler.lua:
+    "local http = require \"resty.http\"\nlocal utils = require \"kong.tools.utils\"\n
+    \nlocal TokenHandler = {\n    VERSION = \"1.0\",\n    PRIORITY = 1000,\n}\n \n
+    \nlocal function introspect_access_token(conf, access_token, customer_id)\n  local
+    httpc = http:new()\n  -- step 1: validate the token\n  local res, err = httpc:request_uri(conf.introspection_url,
+    {\n      -- method = \"POST\",\n      method = \"GET\",\n      ssl_verify = false,\n
+    \     headers = {\n          -- [\"Content-Type\"] = \"application/x-www-form-urlencoded\",\n
+    \         [\"Content-Type\"] = \"application/json\",\n          [\"Authorization\"]
+    = \"Bearer \" .. access_token \n        }\n  })\n \n  if not res then\n      kong.log.err(\"failed
+    to call introspection endpoint: \",err)\n      return kong.response.exit(500)\n
+    \ end\n  if res.status ~= 200 then\n      kong.log.err(\"introspection endpoint
+    responded with status: \",res.status)\n      return kong.response.exit(500)\n
+    \ end\n \n--   -- step 2: validate the customer access rights\n--   local res,
+    _ = httpc:request_uri(conf.authorization_endpoint, {\n--       method = \"POST\",\n--
+    \      ssl_verify = false,\n--       body = '{ \"custId\":\"' .. customer_id ..
+    '\"}',\n--       headers = { [\"Content-Type\"] = \"application/json\",\n--           [\"Authorization\"]
+    = \"Bearer \" .. access_token }\n--   })\n \n--   if not res then\n--     kong.log.err(\"failed
+    to call authorization endpoint: \",err)\n--     return kong.response.exit(500)\n--
+    \  end\n--   if res.status ~= 200 then\n--       kong.log.err(\"authorization
+    endpoint responded with status: \",res.status)\n--       return kong.response.exit(500)\n--
+    \  end\n \n  return true -- all is well\nend\n \nfunction TokenHandler:access(conf)\n
+    \ local access_token = kong.request.get_headers()[conf.token_header]\n  if not
+    access_token then\n      kong.response.exit(401)  --unauthorized\n  end\n  --
+    replace Bearer prefix\n  access_token = access_token:sub(8,-1) -- drop \"Bearer
+    \"\n  local request_path = kong.request.get_path()\n  local values = utils.split(request_path,
+    \"/\")\n  local customer_id = values[3]\n \n  introspect_access_token(conf, access_token,
+    customer_id)\n \n  kong.service.clear_header(conf.token_header)\nend\n \n \nreturn
+    TokenHandler"
+  schema.lua:
+    "local typedefs = require \"kong.db.schema.typedefs\"\n \n \nreturn
+    {\n  name = \"custom-auth\",\n  fields = {\n    { protocols = typedefs.protocols_http
+    },\n    { consumer = typedefs.no_consumer },\n    { config = {\n        type =
+    \"record\",\n        fields = {\n          { introspection_url = typedefs.url({
+    required = true }) },\n          -- { authorization_endpoint = typedefs.url({
+    required = true }) },\n          { token_header = typedefs.header_name { default
+    = \"Authorization\", required = true }, }\n    }, }, },\n  },\n}"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: dmp-local
+
+  annotations:
+    linkerd.io/inject: disabled
+  creationTimestamp: null
+  labels:
+    app: glimmer
+  name: kong-plugin-mbiz-claims2header
+data:
+  handler.lua: |
+    -- dynamic routing based on JWT Claim
+
+    local sub = string.sub
+    -- local type = type
+    -- local pairs = pairs
+    local lower = string.lower
+
+    local jwt_decoder = require "kong.plugins.jwt.jwt_parser"
+    local AUTHORIZATION_HEADER = "Authorization";
+    local CLIENT_SECRET_HEADER = "X-Client-Secret";
+
+    local MbizJWT2Header = {
+      PRIORITY = 900,
+      VERSION = "1.0"
+    }
+
+
+    local function isempty(s)
+      return s == nil or s == ''
+    end
+
+    local function defaultIfBlank(value, defaultStr)
+
+      if (isempty(value)) then
+        return defaultStr
+      end
+
+      return value
+    end
+
+    local function response_err(err)
+      kong.response.exit(err.status, err.errors or { message = err.message })
+    end
+
+    local function resolveToken()
+      local auth_header = kong.request.get_header(AUTHORIZATION_HEADER)
+      local client_secret_header = kong.request.get_header(CLIENT_SECRET_HEADER)
+
+      if client_secret_header then
+          return client_secret_header
+
+      elseif auth_header then
+          local _, _, token = string.find(auth_header, "Bearer%s+(.+)")
+          return token
+      end
+
+      return nil
+    end
+
+    function MbizJWT2Header:rewrite(conf)
+      local get_header = kong.request.get_header
+      local authorization = get_header("Authorization")
+      local appOrigin = defaultIfBlank(get_header("X-App-Origin"), "")
+      local claims = nil
+      local set_header = kong.service.request.set_header
+
+      if resolveToken() == nil then
+        response_err({ status = 401, message = "Authorization token is not found" })
+      end
+
+      if authorization ~= nil then
+
+        if string.match(lower(authorization), 'bearer') ~= nil then
+          local jwt, err = jwt_decoder:new((sub(authorization, 8)))
+          if err then
+            response_err({ status = 401, message = "Bad token; " .. tostring(err) .. "xx" })
+          end
+
+          local algorithm = "HS512"
+          if jwt.header.alg ~= algorithm then
+            response_err({ status = 401, message = "Invalid algorithm" })
+          end
+
+          local jwt_secret_value = conf.base64_secret
+          jwt_secret_value = jwt:base64_decode(jwt_secret_value)
+          if not jwt_secret_value then
+            response_err({ status = 401, message = "Invalid key/secret" })
+          end
+
+          local valid_signature = jwt:verify_signature(jwt_secret_value)
+          if not valid_signature then
+            kong.log.err('Invalid signature')
+            -- response_err({ status = 401, message = "Invalid signature" })
+          end
+
+          local token_type = defaultIfBlank(jwt.header["typ"], "")
+
+          print("\n TOKENTYPE:", token_type)
+          claims = jwt.claims
+          if token_type == "app" then
+            set_header("dmp-origin", claims["sub"])
+            set_header("dmp-authorized", "0")
+          elseif token_type == "user" or token_type == "JWT" then
+            print("\n appOrigin:", appOrigin)
+            if appOrigin == "" then
+              kong.log.err('App origin is missing')
+              response_err({ status = 401, message = "App origin is missing" })
+            end
+            local userId = defaultIfBlank(claims["user_id"], "")
+            local email = defaultIfBlank(claims["email"], "")
+            local companyId = defaultIfBlank(claims["company_id"], "")
+            local roles = defaultIfBlank(claims["roles"], "")
+            local companyType = defaultIfBlank(claims["company_type"], "")
+            local storeName = defaultIfBlank(claims["store_name"], "")
+            local userName = defaultIfBlank(claims["user_name"], "")
+            local loginIn = defaultIfBlank(claims["login_in"], "")
+            local tokenIdentifier = defaultIfBlank(claims["token_identifier"], "")
+            local sellerRoles = defaultIfBlank(claims["seller_roles"], "")
+            local subaccountID = defaultIfBlank(claims["subaccount_id"], "")
+            local lkppToken = defaultIfBlank(claims["lkpp_token"], "")
+            local lkppEmail = defaultIfBlank(claims["lkpp_email"], "")
+            local lkppPhone = defaultIfBlank(claims["lkpp_phone"], "")
+            local lkppUser = defaultIfBlank(claims["lkpp_user"], "")
+            local ssoClientId = defaultIfBlank(claims["ssoClientId"], "")
+            set_header("dmp-origin", appOrigin)
+            set_header("dmp-user-email", email)
+            set_header("dmp-user-id", userId)
+            set_header("dmp-store-name", storeName)
+            set_header("dmp-user-name", userName)
+            set_header("dmp-token-identifier", tokenIdentifier)
+            set_header("dmp-subaccount-id", subaccountID)
+            set_header("dmp-user-roles", roles)
+            set_header("dmp-user-company-type", companyType)
+            set_header("dmp-user-seller-roles", sellerRoles)
+            set_header("dmp-user-company-id", companyId)
+            set_header("dmp-app-login-in", loginIn)
+            set_header("dmp-lkpp-token", lkppToken)
+            set_header("dmp-lkpp-user",lkppUser)
+            set_header("dmp-lkpp-phone", lkppPhone)
+            set_header("dmp-lkpp-email", lkppEmail)
+            set_header("dmp-sso-client-id", ssoClientId)
+            if conf.enabled_debug == "true" then
+              print("\n", "dmp-origin ", appOrigin, "\n", "dmp-user-email ", email, "\n", "dmp-user-id ", userId, "\n",
+                "dmp-store-name ", storeName, "\n", "dmp-user-name ", userName, "\n", "dmp-token-identifier ",
+                tokenIdentifier, "\n",
+                "dmp-subaccount-id ", subaccountID, "\n", "dmp-user-roles ", roles, "\n", "dmp-user-company-type ",
+                companyType, "\n",
+                "dmp-user-seller-roles ", sellerRoles, "\n", "dmp-user-company-id ", companyId, "\n", "dmp-app-login-in ",
+                loginIn,
+                "\n", "dmp-authorized ", "1", "\n",
+                "dmp-lkpp-token ", lkppToken, "\n", "dmp-lkpp-user ", lkppUser, "\n",
+                "dmp-lkpp-phone ", lkppPhone, "\n", "dmp-lkpp-email ", lkppEmail, "\n",
+                "dmp-sso-client-id ", ssoClientId, "\n"
+              )
+            end
+          elseif token_type == "thirdparty" then
+            set_header("dmp-origin", appOrigin)
+            set_header("dmp-authorized", "0")
+            set_header("dmp-partner", defaultIfBlank(claims["partner"], ""))
+            set_header("dmp-thirdparty", "1")
+          else
+            response_err({ status = 401, message = "Token claims is not valid" })
+          end
+
+        end
+      else
+        response_err({ status = 404, message = "Authorization token is not found" })
+      end
+    end
+
+    return MbizJWT2Header
+  mbiz-claims2header-1.0-0.rockspec: |-
+    package = "mbiz-claims2header"
+    version = "0.1-3"source = {
+       url = "git@bitbucket.org:mbizcoid/glimmer.git",
+       branch = "master"
+    }
+    description = {
+       summary = "Mbiz claims to header",
+       homepage = "git@bitbucket.org:mbizcoid/glimmer.git",
+       license = "Apache 2.0"
+    }
+    dependencies = {}
+    build = {
+       type = "builtin",
+       modules = {
+          ["kong.plugins.mbiz-claims2header.handler"]  = "plugins/handler.lua",
+          ["kong.plugins.mbiz-claims2header.schema"]= "plugins/schema.lua"
+       }
+    }
+  schema.lua: |-
+    local typedefs = require "kong.db.schema.typedefs"
+    local PLUGIN_NAME = "mbiz-claims2header"
+
+    local schema = {
+      name = PLUGIN_NAME,
+      fields = {
+        {
+          route = typedefs.no_route,
+        },
+        {
+          service = typedefs.no_service,
+        },
+        {
+          consumer = typedefs.no_consumer,
+        },
+        {
+          protocols = typedefs.protocols_http,
+        },
+        {
+          config = {
+            type = "record",
+            fields = {
+
+              { base64_secret = { type = "string", required = true } },
+              { enabled_debug = { type = "string", required = false } },
+            },
+          },
+        },
+      },
+    }
+
+    return schema
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: dmp-local
+  annotations:
+    linkerd.io/inject: disabled
+  labels:
+    app: glimmer
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: glimmer
+    app.kubernetes.io/version: 1.26.5
+    helm.sh/chart: courier-0.1.0
+  name: glimmer
+spec:
+  ports:
+    - name: kong-proxy
+      nodePort: 32025
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: kong-proxy-tls
+      port: 443
+      protocol: TCP
+      targetPort: 8443
+    - name: kong-admin
+      nodePort: 30026
+      port: 8001
+      protocol: TCP
+    - name: kong-admin-tls
+      nodePort: 30443
+      port: 8444
+      protocol: TCP
+  selector:
+    app: glimmer
+    app.kubernetes.io/name: glimmer
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: dmp-local
+  annotations:
+    linkerd.io/inject: disabled
+  labels:
+    app: glimmer
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: glimmer
+    app.kubernetes.io/version: 1.26.5
+    helm.sh/chart: courier-0.1.0
+  name: glimmer
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: glimmer
+      app.kubernetes.io/name: glimmer
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: disabled
+      labels:
+        app: glimmer
+        app.kubernetes.io/name: glimmer
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: glimmer
+                  app.kubernetes.io/name: glimmer
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: glimmer-env
+          image: glimmer-k8s
+          imagePullPolicy: Never
+
+          # imagePullPolicy: Always
+          name: kong
+          ports:
+            - containerPort: 8000
+              name: kong-proxy
+              protocol: TCP
+            - containerPort: 8443
+              name: kong-proxy-tls
+              protocol: TCP
+            - containerPort: 8001
+              name: kong-admin
+              protocol: TCP
+            - containerPort: 8444
+              name: kong-admin-tls
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /opt/kong/plugins/mbiz-claims2header
+              name: kong-plugin-mbiz-claims2header
+              readOnly: true
+            - mountPath: /opt/kong/plugins/custom-auth
+              name: kong-plugin-custom-auth
+              readOnly: true
+            - mountPath: /opt/kong/plugins/kong-path-allow
+              name: kong-path-allow
+              readOnly: true
+      imagePullSecrets:
+        - name: gitlab-stguat
+      initContainers:
+        - command:
+            - kong
+            - migrations
+            - bootstrap
+          envFrom:
+            - configMapRef:
+                name: glimmer-env
+          image: glimmer-k8s
+          imagePullPolicy: Never
+          # imagePullPolicy: IfNotPresent
+          name: glimmer-kong-init-migrations
+          volumeMounts:
+            - mountPath: /opt/kong/plugins/mbiz-claims2header
+              name: kong-plugin-mbiz-claims2header
+              readOnly: true
+            - mountPath: /opt/kong/plugins/custom-auth
+              name: kong-plugin-custom-auth
+              readOnly: true
+            - mountPath: /opt/kong/plugins/kong-path-allow
+              name: kong-path-allow
+              readOnly: true
+        - command:
+            - kong
+            - migrations
+            - up
+          envFrom:
+            - configMapRef:
+                name: glimmer-env
+          image: glimmer-k8s
+          # imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
+          name: glimmer-kong-pre-upgrade-migrations
+          volumeMounts:
+            - mountPath: /opt/kong/plugins/mbiz-claims2header
+              name: kong-plugin-mbiz-claims2header
+              readOnly: true
+            - mountPath: /opt/kong/plugins/custom-auth
+              name: kong-plugin-custom-auth
+              readOnly: true
+            - mountPath: /opt/kong/plugins/kong-path-allow
+              name: kong-path-allow
+              readOnly: true
+        - command:
+            - kong
+            - migrations
+            - finish
+          envFrom:
+            - configMapRef:
+                name: glimmer-env
+          image: glimmer-local-k8s
+          # imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
+          name: glimmer-kong-post-upgrade-migrations
+          volumeMounts:
+            - mountPath: /opt/kong/plugins/mbiz-claims2header
+              name: kong-plugin-mbiz-claims2header
+              readOnly: true
+            - mountPath: /opt/kong/plugins/custom-auth
+              name: kong-plugin-custom-auth
+              readOnly: true
+            - mountPath: /opt/kong/plugins/kong-path-allow
+              name: kong-path-allow
+              readOnly: true
+      volumes:
+        - configMap:
+            name: kong-plugin-mbiz-claims2header
+          name: kong-plugin-mbiz-claims2header
+        - configMap:
+            name: kong-path-allow
+          name: kong-path-allow
+        - configMap:
+            name: kong-plugin-custom-auth
+          name: kong-plugin-custom-auth
